@@ -144,15 +144,15 @@ def main(page: ft.Page):
         alignment=ft.MainAxisAlignment.CENTER
     )
 
-    form_container = ft.Column([
-        ft.Row([txt_pedido, txt_nome], alignment=ft.MainAxisAlignment.CENTER),
-        ft.Row([msg1], alignment=ft.MainAxisAlignment.CENTER),
-        ft.Row([ft.Text("IVA:"), chk_iva], alignment=ft.MainAxisAlignment.CENTER, vertical_alignment=ft.CrossAxisAlignment.CENTER),
-        ft.Row([ft.Text("Valor:"), chk_valor], alignment=ft.MainAxisAlignment.CENTER, vertical_alignment=ft.CrossAxisAlignment.CENTER),
-        ft.Row([ft.Text("Flag:"), chk_flag], alignment=ft.MainAxisAlignment.CENTER, vertical_alignment=ft.CrossAxisAlignment.CENTER),
-        ft.Container(height=10),
-        ft.Row([btn_salvar, btn_limpar], alignment=ft.MainAxisAlignment.CENTER),
-    ])
+#    form_container = ft.Column([
+#        ft.Row([txt_pedido, txt_nome], alignment=ft.MainAxisAlignment.CENTER),
+#        ft.Row([msg1], alignment=ft.MainAxisAlignment.CENTER),
+#        ft.Row([ft.Text("IVA:"), chk_iva], alignment=ft.MainAxisAlignment.CENTER, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+#        ft.Row([ft.Text("Valor:"), chk_valor], alignment=ft.MainAxisAlignment.CENTER, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+#        ft.Row([ft.Text("Flag:"), chk_flag], alignment=ft.MainAxisAlignment.CENTER, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+#        ft.Container(height=10),
+#        ft.Row([btn_salvar, btn_limpar], alignment=ft.MainAxisAlignment.CENTER),
+#    ])
 
     table_container = ft.Column([
         ft.Text("Histórico de Pedidos Analisados", size=20, weight=ft.FontWeight.W_500),
@@ -164,7 +164,7 @@ def main(page: ft.Page):
     page.add(
         header,
         ft.Container(height=20),
-        form_container,
+        #form_container,
         ft.Container(height=30),
         table_container
     )

@@ -75,5 +75,6 @@ def db_listar_pedidos():
     with psycopg.connect(DB_CONFIG) as conn:
         # Usamos o dict_row para retornar as colunas como um dicionário Python (fácil de ler)
         with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute("SELECT id, pedido, nome, iva, valor, flag, data_avaliacao FROM notas_avaliadas ORDER BY id DESC;")
+            cur.execute("SELECT id, pedido, nome, iva, valor, flag, data_avaliacao FROM notas_avaliadas WHERE data_avaliacao >= CURRENT_DATE - INTERVAL '7 days';")
+            
             return cur.fetchall()

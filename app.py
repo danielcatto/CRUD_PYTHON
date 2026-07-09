@@ -17,7 +17,7 @@ def main(page: ft.Page):
         return
 
     # 1. Configurações da Janela
-    page.window.width = 800
+    page.window.width = 600
     page.window.height = 600
     page.window.center()
     #page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
@@ -74,6 +74,7 @@ def main(page: ft.Page):
             snack = ft.SnackBar(
                 content=ft.Text(f"✅ Pedido visto e salvo com sucesso!"),
                 bgcolor="green"
+                
             )
             atualizar_tabela_notas()
             page.overlay.append(snack)
@@ -91,6 +92,7 @@ def main(page: ft.Page):
    
 
     def atualizar_tabela_notas():
+        tabela_notas.rows.clear()
         tabela_notas.rows.append(
             ft.DataRow(
             cells=[
