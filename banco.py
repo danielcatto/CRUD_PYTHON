@@ -69,12 +69,44 @@ def db_criar_pedido(pedido, nome, iva, valor, flag):
             conn.commit()
         
 # Adicione isso no final do seu banco.py
+#
+#def db_listar_pedidos():
+#    """Busca todos os pedidos registrados ordenados pelo ID mais recente."""
+#    with psycopg.connect(DB_CONFIG) as conn:
+#        # Usamos o dict_row para retornar as colunas como um dicionário Python (fácil de ler)
+#        with conn.cursor(row_factory=dict_row) as cur:
+#            cur.execute("SELECT id, pedido, nome, iva, valor, flag, data_avaliacao FROM notas_avaliadas;")
+#            
+#            return cur.fetchall()
+#        
 
-def db_listar_pedidos():
-    """Busca todos os pedidos registrados ordenados pelo ID mais recente."""
+
+def db_listar_pedidos(dias):
+    """
+    Retorna os pedidos dos últimos 'dias' dias.
+
+    Exemplo:
+        db_listar_pedidos()      -> últimos 1 dia
+        db_listar_pedidos(3)     -> últimos 3 dias
+        db_listar_pedidos(7)     -> últimos 7 dias
+        db_listar_pedidos(30)    -> últimos 30 dias
+    """
+
+    sql = """
+        SELECT
+            id,
+            pedido,
+            nome,
+            iva,
+            valor,
+            flag,
+            data_avaliacao
+        FROM notas_avaliadas
+        WHERE data_avaliacao >= CURRENT_TIMESTAMP - (%s * INTERVAL '1 day')
+        ORDER BY data_avaliacao DESC;
+    """
+
     with psycopg.connect(DB_CONFIG) as conn:
-        # Usamos o dict_row para retornar as colunas como um dicionário Python (fácil de ler)
         with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute("SELECT id, pedido, nome, iva, valor, flag, data_avaliacao FROM notas_avaliadas WHERE data_avaliacao >= CURRENT_DATE - INTERVAL '7 days';")
-            
+            cur.execute(sql, (dias,))
             return cur.fetchall()

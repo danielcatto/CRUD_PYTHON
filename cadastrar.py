@@ -1,176 +1,199 @@
 import flet as ft
+import datetime
 # IMPORTANTE: Aqui trazemos as funções que criamos no outro arquivo
 from banco import inicializar_banco, db_criar_pedido, db_listar_pedidos
+from componentes.botoes import Botao, BotaoSalvar, BotaoLimpar, Checkbox
+from componentes.Textos import Textos, Titulo
+from componentes.mensagens import mensagem
+
 
 def main(page: ft.Page):
-    # 1. Configurações da Janela
-    page.title = "Checa erros das notas fiscais"
-    page.theme_mode = ft.ThemeMode.DARK  # Força o modo escuro
-    page.padding = 20                    # Margem interna nas bordas da janela
-    page.scroll = "adaptive"             # Cria barra de rolagem se a tela encolher
-    
-    # 2. Inicialização do Banco de Dados
+    #Inicialização do Banco de Dados
     try:
         inicializar_banco()
     except Exception as e:
-        page.add(ft.Text(f"❌ Erro ao conectar ao banco: {e}", color="red", size=16))
+        
         page.update()
         return
 
-    # 3. Elementos de Rótulo e Mensagens
-    titulo = ft.Text("Checa erros das notas fiscais", size=28, weight=ft.FontWeight.BOLD)
-    msg1 = ft.Text("Marcar as opções divergentes.", size=16)
+    # 1. Configurações da Janela
+    page.window.width = 600
+    page.window.height = 600
+    page.window.center()
+    #page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+    #page.vertical_alignment = ft.MainAxisAlignment.CENTER
 
-    # 4. Componentes do Formulário (Inputs)
-    txt_pedido = ft.TextField(label="Pedido", hint_text="Digite o Número do Pedido", expand=True)
-    txt_nome = ft.TextField(label="Nome", hint_text="Digite o nome completo", expand=True)
-    chk_iva = ft.Checkbox(label="", value=False)
-    chk_valor = ft.Checkbox(label="", value=False)
-    chk_flag = ft.Checkbox(label="", value=False)
 
-    # --- POP-UP DE VALIDAÇÃO (AlertDialog) ---
-    def fechar_dialogo(e):
-        janela_aviso.open = False
-        page.update()
+    page.title = "Cadastar notas fiscais para correção"
+    page.theme_mode = ft.ThemeMode.DARK  # Força o modo escuro
+    page.padding = 20                    # Margem interna nas bordas da janela
+    page.scroll = "adaptive"             # Cria barra de rolagem se a tela encolher
 
-    janela_aviso = ft.AlertDialog(
-        title=ft.Text("⚠️ Campos Obrigatórios"),
-        content=ft.Text("Por favor, preencha os campos Pedido e Nome antes de salvar!"),
-        actions=[
-            ft.TextButton("OK", on_click=fechar_dialogo)
-        ],
-        actions_alignment=ft.MainAxisAlignment.END,
-    )
+    #configurando os campos e texto e botões
+    @ft.control
+    class Nome(Botao):
+        expand: bool = True
+        border_radius: int = 10
+        filled: bool = True
 
-    # --- FUNÇÃO PARA LIMPAR CAMPOS ---
+
+    @ft.control
+    class Texto(Textos):
+        expand: bool = True
+        border_radius: int = 10
+        filled: bool = True
+        background_color: str = "grey"
+        font_color: str = "red"
+
+    @ft.control
+    class Check(Checkbox):
+        expand: bool = True
+        border_radius: int = 10
+        filled: bool = True
+
+
+    #FUNÇÃO PARA LIMPAR CAMPOS ---
     def limpar_campos(e):
         txt_pedido.value = ""
         txt_nome.value = ""
-        chk_iva.value = False
-        chk_valor.value = False
-        chk_flag.value = False
+        ch_iva.value = False
+        ch_valor.value = False
+        cc_flag.value = False
         page.update()
 
-    # --- FUNÇÃO SALVAR ---
     def salvar_dados(e):
         pedido = txt_pedido.value.strip()
         nome = txt_nome.value.strip()
-        iva = chk_iva.value
-        valor = chk_valor.value
-        flag = chk_flag.value
-
-        if not pedido or not nome:
-            page.overlay.append(janela_aviso)
-            janela_aviso.open = True
-            page.update()
-            return
+        iva = ch_iva.value
+        valor = ch_valor.value
+        flag = cc_flag.value
 
         try:
-            # 1. Tenta salvar no banco de dados
             db_criar_pedido(pedido, nome, iva, valor, flag)
-            
-            # 2. Limpa os campos após salvar
-            txt_pedido.value = ""
-            txt_nome.value = ""
-            chk_iva.value = False
-            chk_valor.value = False
-            chk_flag.value = False
-            
             # 3. Exibe a confirmação na tela
             snack = ft.SnackBar(
-                content=ft.Text("✅ Pedido visto e salvo com sucesso!"),
+                content=ft.Text(f"✅ Pedido visto e salvo com sucesso!"),
                 bgcolor="green"
+                
+            )
+            atualizar_tabela_notas()
+            page.overlay.append(snack)
+            snack.open = True
+
+        except Exception as e:
+            snack = ft.SnackBar(
+                content=ft.Text(f"❌ Erro ao salvar dados: {e}"),
+                bgcolor="red"
             )
             page.overlay.append(snack)
             snack.open = True
-            
-            # 4. Atualiza as linhas da tabela em tempo real!
-            renderizar_tabela()
-            
-        except Exception as ex:
-            snack_erro = ft.SnackBar(
-                content=ft.Text(f"❌ Erro ao salvar: {ex}"),
-                bgcolor="red"
+
+
+   
+
+    def atualizar_tabela_notas():
+        tabela_notas.rows.clear()
+        tabela_notas.rows.append(
+            ft.DataRow(
+            cells=[
+                    ft.DataCell(ft.Text(txt_pedido.value)), 
+                    ft.DataCell(ft.Text(txt_nome.value)),
+                    ft.DataCell(ft.Text("Sim" if ch_iva.value else "Não")),
+                    ft.DataCell(ft.Text("Sim" if ch_valor.value else "Não")),
+                    ft.DataCell(ft.Text("Sim" if cc_flag.value else "Não")),
+
+                    
+
+                ]
             )
-            page.overlay.append(snack_erro)
-            snack_erro.open = True
-        
+        )       
         page.update()
 
-    # 5. Criando os Botões
-    btn_salvar = ft.ElevatedButton("Salvar", icon=ft.Icons.SAVE, on_click=salvar_dados)
-    btn_limpar = ft.OutlinedButton("Limpar campos", icon=ft.Icons.CLEAR, on_click=limpar_campos)
+
+
+    #criando os campos de texto e botões
+    txt_pedido = Texto(label="Pedido", hint_text="Digite o Número do Pedido")
+    txt_nome = Texto(label="Nome", hint_text="Digite o nome completo")
+    ch_iva = Check(label="Iva", value=False)
+    ch_valor = Check(label="Valor", value=False)
+    cc_flag = Check(label="Flag", value=False)
+
+    titulo = ft.Text("Checa erros das notas fiscais", size=40, weight=ft.FontWeight.BOLD)
+
+    #Montando o cabeçaçho   
+    header = ft.Row(
+        [titulo],
+        alignment=ft.MainAxisAlignment.CENTER
+    )
     
+    page_componentes = ft.Column(
+        expand=True,
+        controls=[  
+            
+            ft.Container(
+                expand=True,
+                padding=10,
+                content=
+                    ft.Row(
+                    alignment=ft.MainAxisAlignment.CENTER ,
+                    controls=[
+                        Titulo(value="Cadastro das Notas Faturadas")
+                    ],
+                )   
+                
+                
+            ),
+            ft.Container(
+                expand=True,
+                content=
+                      ft.Row([
+                        txt_pedido,
+                        txt_nome,
+                         ch_iva,
+                        ch_valor,
+                        cc_flag]
+                    ),       
+                
+                
+            )
+
+        ]
+    )
+    btn_salvar = BotaoSalvar(content="Salvar", icon=ft.Icons.SAVE, on_click=salvar_dados)
+    btn_limpar = BotaoLimpar(content="Limpar", icon=ft.Icons.CLEAR, on_click=limpar_campos)
+
+
+    #organiza os botões em linha com o .Row
+    botoes = ft.Row(
+    alignment=ft.MainAxisAlignment.CENTER,
+    spacing=20,
+    controls=[
+        btn_salvar,
+        btn_limpar,
+    ],
+)
+
     # 6. Criando a Estrutura da Tabela de Dados
-    tabela_pedidos = ft.DataTable(
+    tabela_notas = ft.DataTable(
         columns=[
             ft.DataColumn(ft.Text("Pedido")),
             ft.DataColumn(ft.Text("Nome")),
             ft.DataColumn(ft.Text("IVA")),
             ft.DataColumn(ft.Text("Valor")),
             ft.DataColumn(ft.Text("Flag")),
-            ft.DataColumn(ft.Text("Data da Avaliação")),  # Novo campo na tabela
         ],
         rows=[]
     )
 
-    # --- FUNÇÃO QUE ALIMENTA OS DADOS NA TABELA ---
-    def renderizar_tabela():
-        tabela_pedidos.rows.clear()
-        try:
-            pedidos_do_banco = db_listar_pedidos()
-            for p in pedidos_do_banco:
-                tabela_pedidos.rows.append(
-                    ft.DataRow(
-                        cells=[
-                            ft.DataCell(ft.Text(p['pedido'])),
-                            ft.DataCell(ft.Text(p['nome'])),
-                            ft.DataCell(ft.Text("Sim" if p['iva'] else "Não")),
-                            ft.DataCell(ft.Text("Sim" if p['valor'] else "Não")),
-                            ft.DataCell(ft.Text("Sim" if p['flag'] else "Não")),
-                            ft.DataCell(ft.Text(p['data_avaliacao'].strftime("%Y-%m-%d %H:%M:%S"))),  # Novo campo na tabela
-                        ]
-                    )
-                )
-        except Exception as ex:
-            snack_erro = ft.SnackBar(ft.Text(f"Erro ao carregar tabela: {ex}"), bgcolor="red")
-            page.overlay.append(snack_erro)
-            snack_erro.open = True
-        page.update()
+    
 
-    # 7. Estruturação dos Containers de Layout
-    header = ft.Row(
-        [titulo],
-        alignment=ft.MainAxisAlignment.CENTER
-    )
 
-#    form_container = ft.Column([
-#        ft.Row([txt_pedido, txt_nome], alignment=ft.MainAxisAlignment.CENTER),
-#        ft.Row([msg1], alignment=ft.MainAxisAlignment.CENTER),
-#        ft.Row([ft.Text("IVA:"), chk_iva], alignment=ft.MainAxisAlignment.CENTER, vertical_alignment=ft.CrossAxisAlignment.CENTER),
-#        ft.Row([ft.Text("Valor:"), chk_valor], alignment=ft.MainAxisAlignment.CENTER, vertical_alignment=ft.CrossAxisAlignment.CENTER),
-#        ft.Row([ft.Text("Flag:"), chk_flag], alignment=ft.MainAxisAlignment.CENTER, vertical_alignment=ft.CrossAxisAlignment.CENTER),
-#        ft.Container(height=10),
-#        ft.Row([btn_salvar, btn_limpar], alignment=ft.MainAxisAlignment.CENTER),
-#    ])
-
-    table_container = ft.Column([
-        ft.Text("Histórico de Pedidos Analisados", size=20, weight=ft.FontWeight.W_500),
-        ft.Divider(),
-        ft.Row([tabela_pedidos], scroll="always") # Impede erro lateral caso fique grande
-    ], spacing=10)
-
-    # 8. Renderiza e monta a interface na tela
     page.add(
         header,
-        ft.Container(height=20),
-        #form_container,
-        ft.Container(height=30),
-        table_container
+        page_componentes,
+        botoes,
+        tabela_notas,
     )
 
-    # 9. Busca inicial: Carrega o banco assim que abre o programa
-    renderizar_tabela()
-
 if __name__ == "__main__":
-    ft.app(target=main)
+    ft.run(main)
